@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = "mongodb+srv://subhangipriya681:Password@cluster0.qe5oa.mongodb.net/pastebindb"
+const MONGODB_URI = "mongodb+srv://subhangipriya681:Password@cluster0.qe5oa.mongodb.net/pastebindb";
 // process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
