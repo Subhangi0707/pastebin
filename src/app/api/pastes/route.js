@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Paste from "@/models/Paste";
-
-// ❗ TEMP: remove nanoid until schema is verified
-// import { nanoid } from "nanoid";
+import { nanoid } from "nanoid";
 
 export async function POST(req) {
   console.log("➡️ POST /api/pastes called");
@@ -16,7 +14,6 @@ export async function POST(req) {
 
     // Validation
     if (!content || typeof content !== "string" || content.trim() === "") {
-      console.log("❌ Invalid content");
       return NextResponse.json({ error: "Invalid content" }, { status: 400 });
     }
 
@@ -24,7 +21,6 @@ export async function POST(req) {
       ttl_seconds !== undefined &&
       (!Number.isInteger(ttl_seconds) || ttl_seconds < 1)
     ) {
-      console.log("❌ Invalid ttl_seconds:", ttl_seconds);
       return NextResponse.json({ error: "Invalid ttl_seconds" }, { status: 400 });
     }
 
@@ -32,7 +28,6 @@ export async function POST(req) {
       max_views !== undefined &&
       (!Number.isInteger(max_views) || max_views < 1)
     ) {
-      console.log("❌ Invalid max_views:", max_views);
       return NextResponse.json({ error: "Invalid max_views" }, { status: 400 });
     }
 
@@ -40,13 +35,14 @@ export async function POST(req) {
     await connectDB();
     console.log("✅ DB connected");
 
-    let expiresAt = null;
-    if (ttl_seconds !== undefined) {
-      expiresAt = new Date(Date.now() + ttl_seconds * 1000);
-    }
+    const expiresAt =
+      ttl_seconds !== undefined
+        ? new Date(Date.now() + ttl_seconds * 1000)
+        : null;
 
     console.log("📝 Creating paste...");
     const paste = await Paste.create({
+      _id: nanoid(10),            // ✅ REQUIRED by schema
       content,
       expires_at: expiresAt,
       max_views: max_views ?? null,
@@ -80,16 +76,12 @@ export async function GET() {
   console.log("➡️ GET /api/pastes called");
 
   try {
-    console.log("🔌 Connecting to DB...");
     await connectDB();
-    console.log("✅ DB connected");
 
     const pastes = await Paste.find({})
       .sort({ createdAt: -1 })
       .limit(50)
       .select("_id createdAt expires_at max_views view_count");
-
-    console.log(`📄 Found ${pastes.length} pastes`);
 
     return NextResponse.json(
       {
